@@ -1,14 +1,7 @@
-/* ============================================================
-   BOLSY v2.0 — app.js
-   Organização: state | storage | utils | calculations |
-                render | events | navigation | init
-   ============================================================ */
+
 
 'use strict';
 
-// ============================================================
-// STATE
-// ============================================================
 const State = {
   currentScreen: 'dashboard',
   histMonth: new Date().getMonth(),
@@ -19,9 +12,6 @@ const State = {
   editingGoalId: null, // null = nova meta
 };
 
-// ============================================================
-// CONSTANTS
-// ============================================================
 const NOW = new Date();
 const THIS_MONTH = NOW.getMonth();
 const THIS_YEAR  = NOW.getFullYear();
@@ -56,7 +46,11 @@ function makeDate(y, m, d) {
   return new Date(y, m, d).toISOString().slice(0, 10);
 }
 
-const DEFAULT_TRANSACTIONS = (function() {
+const DEFAULT_TRANSACTIONS = [];
+
+const DEFAULT_GOALS = [];
+
+const LEGACY_DEMO_TRANSACTIONS = (function() {
   const y = THIS_YEAR, m = THIS_MONTH, pm = THIS_MONTH - 1;
   return [
     { id:1,  type:'entrada', desc:'Salário',              value:8500, date:makeDate(y,m,5),  cat:'salario',      pay:'pix',     obs:'',          recurrent:true  },
@@ -80,16 +74,13 @@ const DEFAULT_TRANSACTIONS = (function() {
   ];
 })();
 
-const DEFAULT_GOALS = [
+const LEGACY_DEMO_GOALS = [
   { id:1, name:'Apartamento próprio', emoji:'🏡', target:60000, saved:18500, months:36, monthly:1200, createdAt:makeDate(THIS_YEAR-1,3,1) },
   { id:2, name:'Viagem para o Japão', emoji:'✈️', target:15000, saved:4800,  months:18, monthly:600,  createdAt:makeDate(THIS_YEAR,0,1) },
 ];
 
-// ============================================================
-// STORAGE
-// ============================================================
 const Storage = {
-  KEYS: { txs:'bolsy_txs', goals:'bolsy_goals', cats:'bolsy_cats', dist:'bolsy_dist', user:'bolsy_user', nextId:'bolsy_nextid' },
+  KEYS: { txs:'bolsy_txs', goals:'bolsy_goals', cats:'bolsy_cats', dist:'bolsy_dist', user:'bolsy_user', nextId:'bolsy_nextid', migrations:'bolsy_migrations' },
 
   save(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) { console.warn('Storage error', e); }
@@ -150,26 +141,41 @@ const Storage = {
   },
 };
 
-// ============================================================
-// UTILS
-// ============================================================
+
+function arraysEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function runMigrations() {
+  const migrations = Storage.load(Storage.KEYS.migrations, {});
+
+  if (!migrations.v210_remove_demo_data) {
+    const currentTxs = Storage.load(Storage.KEYS.txs, null);
+    const currentGoals = Storage.load(Storage.KEYS.goals, null);
+
+    if (currentTxs && currentTxs.length && arraysEqual(currentTxs, LEGACY_DEMO_TRANSACTIONS)) {
+      Storage.transactions = [];
+    }
+
+    if (currentGoals && currentGoals.length && arraysEqual(currentGoals, LEGACY_DEMO_GOALS)) {
+      Storage.goals = [];
+    }
+
+    Storage.save(Storage.KEYS.migrations, { ...migrations, v210_remove_demo_data: true });
+  }
+}
+
 const Utils = {
   /** Format number as BRL currency string: R$ 1.234,56 */
   fmt(val) {
     return new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(val || 0);
   },
 
-  /** Short format: R$ 1,2k for large values */
   fmtShort(val) {
     if (Math.abs(val) >= 1000) return 'R$ ' + (val / 1000).toFixed(1).replace('.', ',') + 'k';
     return this.fmt(val);
   },
 
-  /**
-   * Currency mask for input fields.
-   * Keeps only digits, formats as centavos → reais.
-   * e.g. typing "1234" → displays "12,34"
-   */
   applyMoneyMask(input) {
     let raw = input.value.replace(/\D/g, ''); // only digits
     if (!raw) { input.value = ''; return; }
@@ -217,9 +223,6 @@ const Utils = {
   },
 };
 
-// ============================================================
-// CALCULATIONS
-// ============================================================
 const Calc = {
   monthSummary(month, year) {
     const txs     = Utils.getMonthTxs(Storage.transactions, month, year);
@@ -258,12 +261,9 @@ const Calc = {
   },
 };
 
-// ============================================================
-// RENDER
-// ============================================================
 const Render = {
 
-  /* ---------- DASHBOARD ---------- */
+  /*  DASHBOARD  */
   dashboard() {
     const { txs, income, expense, balance, paraMetas, comprometido, livre } = Calc.monthSummary(THIS_MONTH, THIS_YEAR);
 
@@ -407,7 +407,7 @@ const Render = {
     ).join('');
   },
 
-  /* ---------- HISTÓRICO ---------- */
+  /*  HISTÓRICO  */
   historico() {
     const m = State.histMonth, y = State.histYear;
     document.getElementById('hist-month-label').textContent = MONTHS_PT[m] + ' ' + y;
@@ -469,7 +469,7 @@ const Render = {
     }).join('');
   },
 
-  /* ---------- METAS ---------- */
+  /*  METAS  */
   metas() {
     const el    = document.getElementById('goals-list');
     const goals = Storage.goals;
@@ -489,7 +489,7 @@ const Render = {
     ).join('');
   },
 
-  /* ---------- CONFIGURAÇÕES ---------- */
+  /*  CONFIGURAÇÕES  */
   configs() {
     const user = Storage.user;
     const name = user.name || '';
@@ -530,9 +530,6 @@ const Render = {
   },
 };
 
-// ============================================================
-// NAVIGATION
-// ============================================================
 function navigate(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -560,9 +557,6 @@ function changeHistMonth(dir) {
   Render.historico();
 }
 
-// ============================================================
-// TRANSACTION FORM
-// ============================================================
 function initNovoForm(txId) {
   const cats = Storage.categories;
 
@@ -668,7 +662,6 @@ function editTransaction(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('screen-novo').classList.add('active');
-  document.getElementById('nav-novo').classList.add('active');
   State.currentScreen = 'novo';
   initNovoForm(id);
 }
@@ -681,14 +674,12 @@ function deleteTransaction(id) {
     () => {
       Storage.transactions = Storage.transactions.filter(t => t.id !== id);
       Render.historico();
+      Render.dashboard();
       showToast('🗑️ Lançamento removido');
     }
   );
 }
 
-// ============================================================
-// GOALS
-// ============================================================
 function showGoalModal(goalId = null) {
   State.editingGoalId = goalId;
   const titleEl  = document.getElementById('modal-goal-title');
@@ -766,9 +757,6 @@ function deleteGoal(id) {
   );
 }
 
-// ============================================================
-// SETTINGS
-// ============================================================
 function saveName() {
   const name = document.getElementById('config-name-input').value.trim();
   if (!name) { showToast('⚠️ Informe seu nome'); return; }
@@ -797,6 +785,9 @@ function importData(event) {
     try {
       const data = JSON.parse(e.target.result);
       Storage.importAll(data);
+      const maxTxId = Math.max(0, ...Storage.transactions.map(t => Number(t.id) || 0));
+      const maxGoalId = Math.max(0, ...Storage.goals.map(g => Number(g.id) || 0));
+      Storage.nextId = Math.max(100, maxTxId, maxGoalId) + 1;
       showToast('📥 Backup importado!');
       Render.configs();
       Render.dashboard();
@@ -815,16 +806,16 @@ function confirmClearData() {
     'Todos os lançamentos, metas e configurações serão removidos. Esta ação não pode ser desfeita.',
     () => {
       Storage.clearAll();
+      State.editingTxId = null;
+      State.editingGoalId = null;
       showToast('🗑️ Dados apagados');
       Render.dashboard();
+      Render.metas();
       Render.configs();
     }
   );
 }
 
-// ============================================================
-// MODAL HELPERS
-// ============================================================
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
@@ -840,7 +831,7 @@ function showConfirm(icon, title, text, onOk) {
   const btn = document.getElementById('confirm-ok');
   // Remove old listeners by cloning
   const newBtn = btn.cloneNode(true);
-  btn.parentNode.replaceChild(newBtn, newBtn);
+  btn.parentNode.replaceChild(newBtn, btn);
   document.getElementById('confirm-ok').addEventListener('click', () => {
     closeModal('modal-confirm');
     onOk();
@@ -848,9 +839,6 @@ function showConfirm(icon, title, text, onOk) {
   document.getElementById('modal-confirm').classList.add('open');
 }
 
-// ============================================================
-// TOAST
-// ============================================================
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -859,24 +847,19 @@ function showToast(msg) {
   el._timer = setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// ============================================================
-// CURRENCY MASK — global event delegation
-// ============================================================
+
 function setupMoneyMask() {
-  // Main amount input
   const amountInput = document.getElementById('input-valor');
   amountInput.addEventListener('input', () => Utils.applyMoneyMask(amountInput));
 
-  // Modal money inputs (goal form)
   document.querySelectorAll('.money-input').forEach(input => {
     input.addEventListener('input', () => Utils.applyMoneyMask(input));
   });
 }
 
-// ============================================================
-// INIT
-// ============================================================
 function init() {
+  runMigrations();
+
   State.histMonth = THIS_MONTH;
   State.histYear  = THIS_YEAR;
 
