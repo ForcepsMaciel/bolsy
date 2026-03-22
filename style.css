@@ -648,3 +648,26 @@ html, body {
 
 /*  DATE INPUT  */
 input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .5; }
+
+/* ── FATURAS ─────────────────────────────────────────────────────────── */
+.fatura-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.fatura-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.fatura-card-name { font-size: 13px; font-weight: 600; color: var(--text-pri); }
+.fatura-venc      { font-size: 11px; color: var(--text-ter); }
+.fatura-total     { font-size: 22px; font-weight: 700; color: var(--text-pri); margin-bottom: 6px; }
+.fatura-folga     { font-size: 12px; color: var(--text-sec); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+
+/* ── NAV: botão "metas" original virou "projeção", ajuste de label ───── */
+/* (sem alteração de CSS necessária — usa classes existentes) */
+

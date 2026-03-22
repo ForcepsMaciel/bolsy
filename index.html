@@ -20,7 +20,7 @@
   <div id="app">
     <div class="status-bar-spacer"></div>
 
-    <!--  DASHBOARD  -->
+    <!-- ══════════════════ DASHBOARD ══════════════════ -->
     <div class="screen active" id="screen-dashboard">
       <div class="screen-scroll">
         <header class="screen-header">
@@ -85,6 +85,19 @@
         <div class="section-title">Gastos por categoria</div>
         <div class="category-chart" id="dash-categories"></div>
 
+        <div id="dash-faturas-section" style="display:none">
+          <div class="section-title">Próximas faturas</div>
+          <div id="dash-faturas"></div>
+        </div>
+
+        <div id="dash-projecao-section" style="display:none">
+          <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Previstos</span>
+            <button class="header-action" style="position:static;width:auto;height:auto;padding:4px 10px;font-size:12px;border-radius:8px" onclick="navigate('projecao')">Ver todos</button>
+          </div>
+          <div id="dash-projecao-list"></div>
+        </div>
+
         <div id="dash-alerts-section" style="display:none">
           <div class="section-title">Alertas</div>
           <div id="dash-alerts"></div>
@@ -94,7 +107,7 @@
       </div>
     </div>
 
-    <!--  HISTÓRICO  -->
+    <!-- ══════════════════ HISTÓRICO ══════════════════ -->
     <div class="screen" id="screen-historico">
       <div class="screen-scroll">
         <header class="screen-header">
@@ -126,7 +139,7 @@
       </div>
     </div>
 
-    <!--  NOVO / EDITAR LANÇAMENTO  -->
+    <!-- ══════════════════ NOVO LANÇAMENTO ══════════════════ -->
     <div class="screen" id="screen-novo">
       <div class="screen-scroll">
         <header class="screen-header">
@@ -173,10 +186,37 @@
         <div class="form-group">
           <label class="form-label">Forma de pagamento</label>
           <div class="payment-chips" id="payment-chips">
-            <button class="chip active" onclick="selectPayment(this,'pix')">PIX</button>
-            <button class="chip" onclick="selectPayment(this,'debito')">Débito</button>
-            <button class="chip" onclick="selectPayment(this,'credito')">Crédito</button>
-            <button class="chip" onclick="selectPayment(this,'dinheiro')">Dinheiro</button>
+            <button class="chip active" data-pay="pix"      onclick="selectPayment(this,'pix')">PIX</button>
+            <button class="chip"        data-pay="debito"   onclick="selectPayment(this,'debito')">Débito</button>
+            <button class="chip"        data-pay="credito"  onclick="selectPayment(this,'credito')">Crédito</button>
+            <button class="chip"        data-pay="dinheiro" onclick="selectPayment(this,'dinheiro')">Dinheiro</button>
+          </div>
+        </div>
+
+        <!-- Campos extras: aparecem apenas quando forma = Crédito -->
+        <div id="credit-extra-fields" style="display:none">
+          <div class="form-row">
+            <div class="form-group form-group-half">
+              <label class="form-label">Cartão</label>
+              <select id="input-card-id" class="form-input form-select"></select>
+            </div>
+            <div class="form-group form-group-half">
+              <label class="form-label">Parcelas</label>
+              <select id="input-parcelas" class="form-input form-select">
+                <option value="1">À vista (1x)</option>
+                <option value="2">2x</option>
+                <option value="3">3x</option>
+                <option value="4">4x</option>
+                <option value="5">5x</option>
+                <option value="6">6x</option>
+                <option value="7">7x</option>
+                <option value="8">8x</option>
+                <option value="9">9x</option>
+                <option value="10">10x</option>
+                <option value="11">11x</option>
+                <option value="12">12x</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -201,21 +241,78 @@
       </div>
     </div>
 
-    <!--  METAS  -->
+    <!-- ══════════════════ METAS ══════════════════ -->
     <div class="screen" id="screen-metas">
       <div class="screen-scroll">
         <header class="screen-header">
           <h1 class="screen-title">Metas</h1>
-          <button class="header-action" onclick="showGoalModal()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          </button>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn-secondary" style="font-size:12px;padding:6px 12px;border-radius:10px;height:auto" onclick="navigate('projecao')">📈 Projeção</button>
+            <button class="header-action" onclick="showGoalModal()">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
         </header>
         <div id="goals-list" class="goals-list"></div>
         <div class="screen-bottom-pad"></div>
       </div>
     </div>
 
-    <!--  CONFIGURAÇÕES  -->
+    <!-- ══════════════════ PROJEÇÃO ══════════════════ -->
+    <div class="screen" id="screen-projecao">
+      <div class="screen-scroll">
+        <header class="screen-header">
+          <h1 class="screen-title">Projeção</h1>
+          <button class="btn-secondary" style="font-size:12px;padding:6px 12px;border-radius:10px;height:auto" onclick="navigate('metas')">🎯 Metas</button>
+        </header>
+
+        <!-- Cards de saldo projetado -->
+        <div class="stats-row" style="margin-bottom:4px">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-green">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 8l3 3 5-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Saldo atual</span>
+              <span class="stat-value" id="proj-saldo-atual">R$ 0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-blue">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Em 30 dias</span>
+              <span class="stat-value" id="proj-saldo-30">R$ 0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-amber">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Em 60 dias</span>
+              <span class="stat-value" id="proj-saldo-60">R$ 0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+          <span>Receitas e despesas previstas</span>
+        </div>
+
+        <!-- Botões de adicionar -->
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn-secondary" style="flex:1" onclick="showFutureItemModal('receita')">+ Receita prevista</button>
+          <button class="btn-secondary" style="flex:1" onclick="showFutureItemModal('despesa')">+ Despesa prevista</button>
+        </div>
+
+        <div id="future-items-list" class="transaction-list"></div>
+        <div class="screen-bottom-pad"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ CONFIGURAÇÕES ══════════════════ -->
     <div class="screen" id="screen-configuracoes">
       <div class="screen-scroll">
         <header class="screen-header">
@@ -245,6 +342,10 @@
         <div class="section-title">Categorias</div>
         <div class="categories-grid" id="categories-grid"></div>
 
+        <div class="section-title">Cartões de crédito</div>
+        <div id="cards-list" style="margin-bottom:8px"></div>
+        <button class="btn-secondary" style="width:100%;margin-bottom:20px" onclick="showCardModal()">+ Adicionar cartão</button>
+
         <div class="section-title">Dados</div>
         <div class="settings-list">
           <div class="settings-item" onclick="exportData()">
@@ -271,12 +372,12 @@
         </div>
 
         <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
-        <div class="app-version">Bolsy v2.0</div>
+        <div class="app-version">Bolsy v3.1</div>
         <div class="screen-bottom-pad"></div>
       </div>
     </div>
 
-    <!--  BOTTOM NAV  -->
+    <!-- ══════════════════ BOTTOM NAV ══════════════════ -->
     <nav class="bottom-nav">
       <button class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -302,7 +403,7 @@
     </nav>
   </div>
 
-  <!--  MODAL: GOAL  -->
+  <!-- ══════════════════ MODAL: META ══════════════════ -->
   <div class="modal-overlay" id="modal-goal" onclick="closeModalOnBackdrop(event,'modal-goal')">
     <div class="modal-sheet">
       <div class="modal-handle"></div>
@@ -336,34 +437,88 @@
     </div>
   </div>
 
-  <!--  MODAL: CONFIRMAR  -->
+  <!-- ══════════════════ MODAL: CARTÃO ══════════════════ -->
+  <div class="modal-overlay" id="modal-card" onclick="closeModalOnBackdrop(event,'modal-card')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h2 class="modal-title">Novo cartão</h2>
+      <div class="form-group">
+        <label class="form-label">Nome do cartão</label>
+        <input type="text" id="card-nome" class="form-input" placeholder="Ex: Nubank, Itaú..." autocomplete="off" />
+      </div>
+      <div class="form-row">
+        <div class="form-group form-group-half">
+          <label class="form-label">Dia fechamento</label>
+          <input type="number" id="card-fechamento" class="form-input" placeholder="Ex: 23" min="1" max="31" inputmode="numeric" />
+        </div>
+        <div class="form-group form-group-half">
+          <label class="form-label">Dia vencimento</label>
+          <input type="number" id="card-vencimento" class="form-input" placeholder="Ex: 10" min="1" max="31" inputmode="numeric" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Limite (opcional)</label>
+        <input type="text" id="card-limite" class="form-input money-input" placeholder="0,00" inputmode="numeric" />
+      </div>
+      <button class="btn-primary btn-full" onclick="saveCard()">Salvar cartão</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════ MODAL: ITEM FUTURO ══════════════════ -->
+  <div class="modal-overlay" id="modal-future-item" onclick="closeModalOnBackdrop(event,'modal-future-item')">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h2 class="modal-title" id="future-item-modal-title">Nova receita prevista</h2>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <input type="text" id="future-item-desc" class="form-input" placeholder="Ex: Salário, Aluguel..." autocomplete="off" />
+      </div>
+      <div class="form-row">
+        <div class="form-group form-group-half">
+          <label class="form-label">Valor</label>
+          <input type="text" id="future-item-valor" class="form-input money-input" placeholder="0,00" inputmode="numeric" />
+        </div>
+        <div class="form-group form-group-half">
+          <label class="form-label">Data prevista</label>
+          <input type="date" id="future-item-data" class="form-input" />
+        </div>
+      </div>
+      <!-- Categoria: visível apenas para despesas -->
+      <div class="form-group" id="future-item-cat-row">
+        <label class="form-label">Categoria</label>
+        <select id="future-item-cat" class="form-input form-select"></select>
+      </div>
+      <button class="btn-primary btn-full" id="btn-save-future-item" onclick="saveFutureItem()">Salvar receita</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════ MODAL: CONFIRMAÇÃO ══════════════════ -->
   <div class="modal-overlay" id="modal-confirm">
     <div class="modal-sheet modal-sheet-sm">
       <div class="modal-handle"></div>
       <div class="confirm-icon" id="confirm-icon">🗑️</div>
-      <h2 class="modal-title" id="confirm-title">Confirmar exclusão</h2>
-      <p class="confirm-text" id="confirm-text">Tem certeza que deseja apagar?</p>
+      <h2 class="modal-title" id="confirm-title">Confirmar</h2>
+      <p class="confirm-text" id="confirm-text">Tem certeza?</p>
       <div class="confirm-btns">
         <button class="btn-ghost" onclick="closeModal('modal-confirm')">Cancelar</button>
-        <button class="btn-danger" id="confirm-ok">Apagar</button>
+        <button class="btn-danger" id="confirm-ok">Confirmar</button>
       </div>
     </div>
   </div>
 
-  <!-- TOAST  -->
   <div class="toast" id="toast"></div>
 
   <script src="app.js"></script>
 
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(() => console.log('Service Worker registrado com sucesso'))
-        .catch((err) => console.error('Erro ao registrar Service Worker:', err));
-    });
-  }
-</script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(() => console.log('SW registrado'))
+          .catch(err => console.error('SW erro:', err));
+      });
+    }
+  </script>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bolsy-v2';
+const CACHE_NAME = 'bolsy-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
